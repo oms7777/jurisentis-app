@@ -1,5 +1,9 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+     "@/components/*": ["components/*"]
+    },
     "typeRoots": [
       "./types",
       "./node_modules/@types"

@@ -8,48 +8,40 @@ datasource db {
 }
 
 model User {
-  id                        String   @id @default(auto()) @map("_id") @db.ObjectId
-  email                     String   @unique
+  id                        String    @id @default(auto()) @map("_id") @db.ObjectId
+  email                     String    @unique
   name                      String?
   password                  String?
-  role                      String?      // 'admin', 'clo', 'juriste', etc.
+  role                      String? // 'admin', 'clo', 'juriste', etc.
   organization              String?
-  isActive                  Boolean  @default(false)
-  isSandbox                 Boolean  @default(false)
+  isActive                  Boolean   @default(false)
+  isSandbox                 Boolean   @default(false)
   registrationCode          String?
   registrationCodeExpiresAt DateTime?
 
-  accounts                  Account[]
-  sessions                  Session[]
-  contracts                 Contract[] @relation("UserContracts")
+  accounts  Account[]
+  sessions  Session[]
+  contracts Contract[]      @relation("UserContracts")
+  templates VaultTemplate[] @relation("UserTemplates") // ✅ relation inverse nommée
 }
 
 model Account {
-  id                 String  @id @default(auto()) @map("_id") @db.ObjectId
-  userId             String  @db.ObjectId
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?
-  access_token       String?
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?
-  session_state      String?
-  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
-}
-
-model Contract {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  status      String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdBy   String   @db.ObjectId
-  user        User     @relation("UserContracts", fields: [createdBy], references: [id])
 }
 
 model Session {
@@ -57,7 +49,8 @@ model Session {
   sessionToken String   @unique
   userId       String   @db.ObjectId
   expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
@@ -67,4 +60,35 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model Contract {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  status      String
+  summary     String? // 🧠 Résumé IA
+  rawText     String? // 📄 Texte brut
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  category    String?
+  tags        String?
+  description String?
+  fromTemplateId String? @db.ObjectId
+
+  createdById String @db.ObjectId
+  createdBy   User   @relation(fields: [createdById], references: [id], name: "UserContracts")
+}
+
+model VaultTemplate {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  category  String
+  clauses   String[]
+  tags      String[]
+  status    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdById String @db.ObjectId
+  createdBy   User   @relation(fields: [createdById], references: [id], name: "UserTemplates") // ✅ inverse correspond à `templates` dans User
 }
