@@ -20,8 +20,11 @@ export default function ModalTemplateForm({ onCreated }: ModalTemplateFormProps)
   const [tags, setTags] = useState('')
 
   const handleSubmit = async () => {
-    const res = await fetch('/api/xvault', {
+    const res = await fetch('/api/xvault/templates', {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         title,
         category,

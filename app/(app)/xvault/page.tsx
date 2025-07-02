@@ -6,6 +6,7 @@ import { VaultTemplate } from 'features/xvault/types/template'
 import ModalTemplateForm from 'features/xvault/components/ModalTemplateForm'
 import VaultTable from 'features/xvault/components/VaultTable'
 import TemplateDetailPanel from 'features/xvault/components/TemplateDetailPanel'
+import ImportTemplateForm from 'features/xvault/components/ImportTemplateForm'
 
 export default function XVaultPage() {
   const router = useRouter()
@@ -13,7 +14,7 @@ export default function XVaultPage() {
   const [selectedTemplate, setSelectedTemplate] = useState<VaultTemplate | null>(null)
 
   const fetchTemplates = async () => {
-    const res = await fetch('/api/xvault')
+    const res = await fetch('/api/xvault/templates')
     const data = await res.json()
     setTemplates(data)
   }
@@ -31,7 +32,10 @@ export default function XVaultPage() {
             Gérer les modèles, clauses types et structures contractuelles de votre organisation.
           </p>
         </div>
-        <ModalTemplateForm onCreated={fetchTemplates} />
+        <div className="flex gap-2">
+          <ImportTemplateForm onImported={fetchTemplates} />
+          <ModalTemplateForm onCreated={fetchTemplates} />
+        </div>
       </div>
 
       <div className="bg-white p-6 rounded-xl shadow-md">
