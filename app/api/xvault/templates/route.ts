@@ -1,8 +1,10 @@
-import { prisma } from 'lib/prisma'
+// app/api/templates/route.ts
+import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
-import { authOptions } from 'lib/auth'
 import { NextResponse } from 'next/server'
 
+// 📥 GET – Lister tous les modèles
 export async function GET() {
   try {
     const templates = await prisma.vaultTemplate.findMany({
@@ -14,6 +16,7 @@ export async function GET() {
   }
 }
 
+// ➕ POST – Créer un nouveau modèle
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions)
@@ -43,6 +46,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(template)
   } catch (error) {
+    console.error('Erreur POST /templates:', error)
     return NextResponse.json({ error: 'Erreur création modèle' }, { status: 500 })
   }
 }

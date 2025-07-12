@@ -1,6 +1,6 @@
 // app/api/contrats/[id]/route.ts
 
-import { prisma } from 'lib/prisma'
+import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 
 // ✅ GET : récupérer un contrat par ID

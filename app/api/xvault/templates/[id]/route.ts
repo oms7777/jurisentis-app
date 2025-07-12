@@ -1,53 +1,27 @@
-import { prisma } from 'lib/prisma'
-import { getServerSession } from 'next-auth'
-import { authOptions } from 'lib/auth'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  const id = params.id
+
   try {
-    const template = await prisma.vaultTemplate.findUnique({
-      where: { id: params.id },
+    // Vérifie si le modèle existe
+    const existing = await prisma.vaultTemplate.findUnique({
+      where: { id },
     })
 
-    if (!template) {
-      return NextResponse.json({ error: 'Modèle introuvable' }, { status: 404 })
+    if (!existing) {
+      return NextResponse.json({ error: 'Modèle non trouvé' }, { status: 404 })
     }
 
-    return NextResponse.json(template)
-  } catch (error) {
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
-  }
-}
-
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
-  try {
-    const session = await getServerSession(authOptions)
-    const user = session?.user
-    if (!user?.id) {
-      return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
-    }
-
-    const body = await req.json()
-    const { title, category, clauses, tags, status } = body
-
-    const updated = await prisma.vaultTemplate.update({
-      where: { id: params.id },
-      data: { title, category, clauses, tags, status },
-    })
-
-    return NextResponse.json(updated)
-  } catch (error) {
-    return NextResponse.json({ error: 'Erreur mise à jour modèle' }, { status: 500 })
-  }
-}
-
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
-  try {
+    // Supprime le modèle
     await prisma.vaultTemplate.delete({
-      where: { id: params.id },
+      where: { id },
     })
+
     return NextResponse.json({ message: 'Modèle supprimé' })
   } catch (error) {
-    return NextResponse.json({ error: 'Erreur suppression modèle' }, { status: 500 })
+    console.error('[TEMPLATE_DELETE_ERROR]', error)
+    return NextResponse.json({ error: 'Erreur lors de la suppression' }, { status: 500 })
   }
 }

@@ -20,12 +20,14 @@ import { Button } from '@/components/ui/button'
 import ContractDetailPanel from '../detail/ContractDetailPanel'
 import { getColumns } from './columns'
 import CreateContractModal from '../modals/CreateContractModal'
+import ContractImport from '../modals/ContractImport'
+import PdfContractPanel from '../modals/PdfContractPanel'
 
 interface Props {
   contracts: Contract[]
   fetchContracts: () => void
   setContracts: React.Dispatch<React.SetStateAction<Contract[]>>
-  onSelect?: (contract: Contract) => void
+  onSelect?: (contract: Contract, action: 'view' | 'pdf') => void
 }
 
 export default function ContractListView({
@@ -38,6 +40,7 @@ export default function ContractListView({
   const [status, setStatus] = useState('all')
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null)
+  const [pdfContract, setPdfContract] = useState<Contract | null>(null)
 
   const filteredContracts = contracts.filter((c) => {
     const matchQuery = query ? c.title.toLowerCase().includes(query.toLowerCase()) : true
@@ -49,17 +52,18 @@ export default function ContractListView({
     return matchQuery && matchStatus && matchDate
   })
 
-  const handleRowClick = (row: Contract) => {
+  const handleSelect = (contract: Contract, action: 'view' | 'pdf') => {
     if (onSelect) {
-      onSelect(row)
+      onSelect(contract, action)
     } else {
-      setSelectedContract(row)
+      if (action === 'pdf') setPdfContract(contract)
+      else setSelectedContract(contract)
     }
   }
 
   return (
     <div className="relative space-y-6">
-      {/* 🧠 Filtres + bouton de création */}
+      {/* 🔍 Filtres */}
       <div className="flex flex-col md:flex-row md:items-end gap-4">
         <div className="flex-1">
           <label className="block text-sm font-medium mb-1">🔍 Recherche</label>
@@ -104,17 +108,18 @@ export default function ContractListView({
         </div>
       </div>
 
-      {/* 🗂️ Tableau */}
+
+      {/* 📊 Tableau */}
       <div className="bg-white border rounded-xl p-4">
         <DataTable
-          columns={getColumns(fetchContracts)}
+          columns={getColumns(fetchContracts, handleSelect)}
           data={filteredContracts}
-          onRowClick={handleRowClick}
+          onRowClick={(row) => handleSelect(row, 'view')}
         />
       </div>
 
-      {/* ✅ Détail latéral si pas de `onSelect` passé */}
-      {selectedContract && !onSelect && (
+      {/* 📋 Détail contrat */}
+      {selectedContract && (
         <ContractDetailPanel
           contract={selectedContract}
           onClose={() => setSelectedContract(null)}
@@ -122,6 +127,14 @@ export default function ContractListView({
             fetchContracts()
             setSelectedContract(null)
           }}
+        />
+      )}
+
+      {/* 📄 PDF panel */}
+      {pdfContract && (
+        <PdfContractPanel
+          contractId={pdfContract.id}
+          onClose={() => setPdfContract(null)}
         />
       )}
     </div>

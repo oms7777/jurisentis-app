@@ -2,8 +2,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { prisma } from 'lib/prisma'
-import { authOptions } from 'lib/auth'
+import { prisma } from '@/lib/prisma'
+import { authOptions } from '@/lib/auth'
 
 // 🔄 GET : Récupérer tous les contrats
 export async function GET() {
@@ -28,7 +28,8 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json()
-  const { title, status, category, tags, description } = body
+  const { title, status, category, tags, description, fileUrl, summary, rawText } = body
+
 
   if (!title || !status) {
     return NextResponse.json({ error: 'Champs obligatoires manquants' }, { status: 400 })
@@ -42,8 +43,12 @@ export async function POST(req: NextRequest) {
         category,
         tags,
         description,
+        fileUrl,
+        summary,
+        rawText,
         createdById: user.id,
-      },
+      }
+
     })
     return NextResponse.json(nouveauContrat)
   } catch (err: any) {

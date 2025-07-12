@@ -2,7 +2,7 @@
 
 import { ColumnDef } from '@tanstack/react-table'
 import { formatDate } from 'lib/utils'
-import { Pencil, Trash } from 'lucide-react'
+import { Pencil, Trash, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { useState } from 'react'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
@@ -34,7 +34,7 @@ function StatusBadge({ status }: { status: ContractStatus }) {
 
 export function getColumns(
   refetch: () => void,
-  onSelect?: (contract: Contract) => void
+  onSelect?: (contract: Contract, action: 'view' | 'pdf') => void
 ): ColumnDef<Contract>[] {
   return [
     {
@@ -43,7 +43,7 @@ export function getColumns(
       cell: ({ row }) => (
         <span
           className="font-medium cursor-pointer hover:underline"
-          onClick={() => onSelect?.(row.original)}
+          onClick={() => onSelect?.(row.original, 'view')}
         >
           {row.getValue('title')}
         </span>
@@ -100,7 +100,25 @@ export function getColumns(
           <div className="flex gap-1 items-center">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" onClick={() => setEditOpen(true)} className="p-2">
+                <Button variant="outline" size="sm" onClick={() => onSelect?.(contract, 'view')}>
+                  👁 Voir
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Voir fiche</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="sm" onClick={() => onSelect?.(contract, 'pdf')}>
+                  <FileText className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Voir PDF</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="sm" onClick={() => setEditOpen(true)}>
                   <Pencil className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
@@ -109,7 +127,12 @@ export function getColumns(
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" onClick={handleDelete} className="text-red-500 hover:text-red-700 p-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDelete}
+                  className="text-red-500 hover:text-red-700"
+                >
                   <Trash className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>

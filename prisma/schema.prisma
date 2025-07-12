@@ -22,7 +22,8 @@ model User {
   accounts  Account[]
   sessions  Session[]
   contracts Contract[]      @relation("UserContracts")
-  templates VaultTemplate[] @relation("UserTemplates") // ✅ relation inverse nommée
+  templates VaultTemplate[] @relation("UserTemplates") // <-- doit correspondre à `name: "UserTemplates"`
+
 }
 
 model Account {
@@ -63,32 +64,37 @@ model VerificationToken {
 }
 
 model Contract {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  status      String
-  summary     String? // 🧠 Résumé IA
-  rawText     String? // 📄 Texte brut
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  category    String?
-  tags        String?
-  description String?
-  fromTemplateId String? @db.ObjectId
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  title          String
+  status         String
+  summary        String?  // 🧠 Résumé IA
+  rawText        String?  // 📄 Texte brut extrait
+  fileUrl        String?  // 📎 URL du fichier PDF (ex: /uploads/xxxx.pdf)
+  category       String?
+  tags           String?
+  description    String?
+  fromTemplateId String?  @db.ObjectId
 
-  createdById String @db.ObjectId
-  createdBy   User   @relation(fields: [createdById], references: [id], name: "UserContracts")
+  createdById    String   @db.ObjectId
+  createdBy      User     @relation(fields: [createdById], references: [id], name: "UserContracts")
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
+
 
 model VaultTemplate {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  title     String
-  category  String
-  clauses   String[]
-  tags      String[]
-  status    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  createdById String @db.ObjectId
-  createdBy   User   @relation(fields: [createdById], references: [id], name: "UserTemplates") // ✅ inverse correspond à `templates` dans User
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  category    String
+  clauses     String[]
+  tags        String[]
+  status      String
+  rawText     String?
+  fileUrl     String? // ✅ chemin du PDF
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String   @db.ObjectId
+  createdBy   User     @relation(fields: [createdById], references: [id], name: "UserTemplates")
 }
+

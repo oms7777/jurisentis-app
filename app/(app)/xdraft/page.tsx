@@ -12,6 +12,7 @@ import ContractListView from 'features/xdraft/components/list/ContractListView'
 import ContractStats from 'features/xdraft/components/dashboard/ContractStats'
 import ContractCollaboration from 'features/xdraft/components/detail/ContractCollaboration'
 import ContractDetailPanel from 'features/xdraft/components/detail/ContractDetailPanel'
+import PdfContractPanel from '@/features/xdraft/components/modals/PdfContractPanel'
 
 
 
@@ -19,10 +20,11 @@ export default function XDraftPage() {
   const [contracts, setContracts] = useState<Contract[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null)
+  const [showPdf, setShowPdf] = useState(false)
 
   const fetchContracts = async () => {
     try {
-      const res = await fetch('/api/contrats') // ✅ bon chemin
+      const res = await fetch('/api/contrats')
       if (!res.ok) throw new Error('Erreur réseau')
       const data = await res.json()
       setContracts(data)
@@ -32,7 +34,6 @@ export default function XDraftPage() {
       setLoading(false)
     }
   }
-
 
   useEffect(() => {
     fetchContracts()
@@ -64,7 +65,10 @@ export default function XDraftPage() {
             contracts={contracts}
             fetchContracts={fetchContracts}
             setContracts={setContracts}
-            onSelect={setSelectedContract}
+            onSelect={(contract) => {
+              setSelectedContract(contract)
+              setShowPdf(true) // ou false selon vue par défaut
+            }}
           />
         </TabsContent>
 
@@ -77,18 +81,25 @@ export default function XDraftPage() {
         </TabsContent>
       </Tabs>
 
-      {/* 📄 Détail animé du contrat */}
+      {/* 📄 Détail animé du contrat (vue PDF ou vue classique) */}
       <AnimatePresence>
-        {selectedContract && (
-          <ContractDetailPanel
-            contract={selectedContract}
-            onClose={() => setSelectedContract(null)}
-            onUpdated={() => {
-              fetchContracts()
-              setSelectedContract(null)
-            }}
-          />
-        )}
+        {selectedContract &&
+          (showPdf ? (
+            <PdfContractPanel
+              contractId={selectedContract.id}
+              onClose={() => setSelectedContract(null)}
+            />
+
+          ) : (
+            <ContractDetailPanel
+              contract={selectedContract}
+              onClose={() => setSelectedContract(null)}
+              onUpdated={() => {
+                fetchContracts()
+                setSelectedContract(null)
+              }}
+            />
+          ))}
       </AnimatePresence>
     </div>
   )

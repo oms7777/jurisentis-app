@@ -5,7 +5,8 @@ export interface VaultTemplate {
   clauses: string[]
   tags: string[]
   status: string
-  createdAt: string
-  updatedAt: string
-  createdById: string
+  rawText?: string
+  fileUrl?: string
+  createdAt: Date
+  updatedAt: Date
 }

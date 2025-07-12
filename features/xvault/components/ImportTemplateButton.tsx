@@ -1,46 +1,68 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from 'lib/auth'
-import { extractTextFromPDF } from 'lib/pdf'
-import { prisma } from 'lib/prisma'
+'use client'
 
-export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions)
-  const user = session?.user
+import { useRef, useState } from 'react'
+import { Upload, Loader2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 
-  if (!user?.id) {
-    return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+interface ImportTemplateButtonProps {
+  templateId: string // 👈 Ajout nécessaire
+  onSuccess?: (fileUrl: string) => void
+}
+
+export default function ImportTemplateButton({ templateId, onSuccess }: ImportTemplateButtonProps) {
+  const [loading, setLoading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setLoading(true)
+    toast('📂 Importation en cours...')
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('templateId', templateId) // ✅ important
+
+      const res = await fetch('/api/xvault/upload-temp', {
+        method: 'POST',
+        body: formData,
+      })
+
+
+      const contentType = res.headers.get('content-type') || ''
+      const isJson = contentType.includes('application/json')
+      const data = isJson ? await res.json() : null
+
+      if (!res.ok) {
+        throw new Error(data?.error || 'Erreur inconnue')
+      }
+
+      toast.success('✅ Fichier importé avec succès')
+      onSuccess?.(data.fileUrl)
+    } catch (error: any) {
+      toast.error(`❌ Échec de l'import : ${error.message}`)
+    } finally {
+      setLoading(false)
+      event.target.value = '' // reset
+    }
   }
 
-  const formData = await req.formData()
-  const file = formData.get('file') as File
-
-  if (!file) {
-    return NextResponse.json({ error: 'Aucun fichier reçu' }, { status: 400 })
-  }
-
-  const arrayBuffer = await file.arrayBuffer()
-  const buffer = Buffer.from(arrayBuffer)
-
-  try {
-    const text = await extractTextFromPDF(buffer)
-
-    // Exemple : découper en clauses par paragraphes
-    const clauses = text.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean)
-
-    const template = await prisma.vaultTemplate.create({
-      data: {
-        title: file.name.replace(/\.pdf$/, ''),
-        category: 'Importé',
-        status: 'brouillon',
-        clauses,
-        tags: ['importé'],
-        createdById: user.id,
-      },
-    })
-
-    return NextResponse.json(template)
-  } catch (error) {
-    return NextResponse.json({ error: 'Erreur lors du parsing PDF' }, { status: 500 })
-  }
+  return (
+    <>
+      <input
+        type="file"
+        accept=".pdf,.docx"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        style={{ display: 'none' }}
+      />
+      <Button onClick={() => fileInputRef.current?.click()} disabled={loading} variant="outline">
+        {loading ? <Loader2 className="animate-spin h-4 w-4" /> : <Upload className="h-4 w-4" />}
+        Importer un fichier
+      </Button>
+    </>
+  )
 }
